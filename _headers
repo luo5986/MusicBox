@@ -1,0 +1,14 @@
+/*.jpg
+  Cache-Control: public, max-age=604800
+/*.jpeg
+  Cache-Control: public, max-age=604800
+/*.png
+  Cache-Control: public, max-age=604800
+/*.webp
+  Cache-Control: public, max-age=2592000, immutable
+/*.mp3
+  Cache-Control: public, max-age=864000
+/*.ogg
+  Cache-Control: public, max-age=864000
+/*.wav
+  Cache-Control: public, max-age=864000
