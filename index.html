@@ -931,6 +931,7 @@
     // 进度条拖拽相关变量
     let isDraggingProgress = false;
     let wasPlayingBeforeDrag = false;
+    let dragTargetPercent = 0; // 拖拽目标位置
 
     function initProgressBarEvents() {
         const progressBar = document.getElementById('progressBar');
@@ -960,7 +961,7 @@
         if (wasPlayingBeforeDrag) {
             pause();
         }
-        updateProgressFromEvent(e);
+        updateProgressUIDuringDrag(e);
     }
 
     function handleDragMove(e) {
@@ -968,19 +969,26 @@
         if (e.type === 'touchmove') {
             e.preventDefault();
         }
-        updateProgressFromEvent(e);
+        updateProgressUIDuringDrag(e);
     }
 
     function handleDragEnd(e) {
         if (!isDraggingProgress) return;
         isDraggingProgress = false;
         document.getElementById('progressBar').classList.remove('dragging');
+
+        // 松手后才真正跳转到目标位置
+        if (playerState.duration > 0) {
+            audioPlayer.currentTime = (dragTargetPercent / 100) * playerState.duration;
+        }
+
         if (wasPlayingBeforeDrag) {
             play();
         }
     }
 
-    function updateProgressFromEvent(e) {
+    // 拖拽时只更新UI，不实际跳转
+    function updateProgressUIDuringDrag(e) {
         const progressTrack = document.querySelector('.progress-track');
         const rect = progressTrack.getBoundingClientRect();
 
@@ -992,13 +1000,18 @@
         }
 
         const clickX = clientX - rect.left;
-        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+        const percentage = Math.max(0, Math.min(1, clickX / rect.width)) * 100;
 
+        // 保存目标位置
+        dragTargetPercent = percentage;
+
+        // 只更新UI，不设置 audioPlayer.currentTime
+        updateProgressUI(percentage);
+
+        // 显示目标时间
         if (playerState.duration > 0) {
-            audioPlayer.currentTime = percentage * playerState.duration;
-            // 更新UI（包括进度条和圆点）
-            updateProgressUI(percentage * 100);
-            document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
+            const targetTime = (percentage / 100) * playerState.duration;
+            document.getElementById('currentTime').textContent = formatTime(targetTime);
         }
     }
 
