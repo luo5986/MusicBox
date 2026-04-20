@@ -71,7 +71,7 @@
             transform: scale(1.1);
         }
 
-        .theme-panel {
+        .theme-popover {
             display: none;
             position: absolute;
             top: 45px;
@@ -81,16 +81,28 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             z-index: 100;
+            animation: popoverFadeIn 0.2s ease;
         }
 
-        .theme-panel.active {
+        .theme-popover.active {
             display: block;
         }
 
-        .theme-panel::before {
+        @keyframes popoverFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .theme-popover::before {
             content: '';
             position: absolute;
-            top: -4px;
+            top: -8px;
             right: 45px;
             width: 0;
             height: 0;
@@ -509,9 +521,9 @@
     <div class="music-box-header">
         <h2>🎵 音乐盒</h2>
         <div class="header-actions">
-            <button class="theme-btn" onclick="toggleThemePanel()" title="主题颜色">🎨</button>
+            <button class="theme-btn" onclick="toggleThemePopover()" title="主题颜色">🎨</button>
             <button class="close-btn" onclick="closeMusicBox()" title="关闭">✕</button>
-            <div class="theme-panel" id="themePanel">
+            <div class="theme-popover" id="themePopover">
                 <div class="theme-options">
                     <div class="theme-option active" data-theme="purple" onclick="setMusicTheme('purple')" style="background: linear-gradient(135deg, #D4C4E8 0%, #C4B0E0 100%);"></div>
                     <div class="theme-option" data-theme="blue" onclick="setMusicTheme('blue')" style="background: linear-gradient(135deg, #A8D8EA 0%, #7EB5D6 100%);"></div>
@@ -1116,29 +1128,34 @@
         gray: { bg: 'linear-gradient(135deg, #D5D5D5 0%, #B0B0B0 100%)', primary: '#D5D5D5', secondary: '#B0B0B0' }
     };
 
-    function toggleThemePanel() {
-        const panel = document.getElementById('themePanel');
-        const isOpening = !panel.classList.contains('active');
+    function toggleThemePopover() {
+        const popover = document.getElementById('themePopover');
+        const isOpening = !popover.classList.contains('active');
         
-        panel.classList.toggle('active');
+        popover.classList.toggle('active');
         
-        // 如果面板打开，添加点击外部关闭的事件监听
+        // 如果气泡打开，添加点击外部关闭的事件监听
         if (isOpening) {
             setTimeout(() => {
-                document.addEventListener('click', closeThemePanelOnClickOutside);
+                document.addEventListener('click', closeThemePopoverOnClickOutside);
             }, 0);
         }
     }
     
-    function closeThemePanelOnClickOutside(e) {
-        const panel = document.getElementById('themePanel');
+    function closeThemePopoverOnClickOutside(e) {
+        const popover = document.getElementById('themePopover');
         const themeBtn = document.querySelector('.theme-btn');
         
-        // 如果点击的不是面板内部也不是主题按钮，则关闭面板
-        if (!panel.contains(e.target) && !themeBtn.contains(e.target)) {
-            panel.classList.remove('active');
-            document.removeEventListener('click', closeThemePanelOnClickOutside);
+        // 如果点击的不是气泡内部也不是主题按钮，则关闭气泡
+        if (!popover.contains(e.target) && !themeBtn.contains(e.target)) {
+            popover.classList.remove('active');
+            document.removeEventListener('click', closeThemePopoverOnClickOutside);
         }
+    }
+
+    function closeThemePopover() {
+        const popover = document.getElementById('themePopover');
+        popover.classList.remove('active');
     }
 
     function setMusicTheme(themeName) {
@@ -1157,7 +1174,7 @@
         });
 
         localStorage.setItem('music_theme', themeName);
-        document.getElementById('themePanel').classList.remove('active');
+        closeThemePopover();
     }
 
     function loadMusicTheme() {
@@ -1173,5 +1190,7 @@
 
     initMusic();
 </script>
+
+
 </body>
 </html>
