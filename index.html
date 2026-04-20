@@ -51,6 +51,7 @@
         .header-actions {
             display: flex;
             gap: 10px;
+            position: relative;
         }
 
         .theme-btn, .close-btn {
@@ -72,13 +73,30 @@
 
         .theme-panel {
             display: none;
-            padding: 15px 25px;
-            background: var(--music-header-bg);
-            border-top: 1px solid rgba(255,255,255,0.1);
+            position: absolute;
+            top: 45px;
+            right: 10px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 100;
         }
 
         .theme-panel.active {
             display: block;
+        }
+
+        .theme-panel::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: 45px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid white;
         }
 
         .theme-options {
@@ -219,31 +237,53 @@
             align-items: center;
             cursor: pointer;
             position: relative;
+            margin: 0 7px;
         }
 
         .progress-track {
             width: 100%;
             height: 6px;
-            background: #E8E0EC;
+            background: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
             position: relative;
+            overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--music-primary);
+            background: linear-gradient(90deg, var(--music-primary) 0%, var(--music-secondary) 100%);
             border-radius: 3px;
             width: 0%;
             transition: width 0.1s linear;
+            position: relative;
+            will-change: width;
+        }
+
+        /* 拖拽时去掉过渡，让进度条即时跟随 */
+        .progress-bar.dragging .progress-fill {
+            transition: none;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 100%);
+            border-radius: 0 3px 3px 0;
         }
 
         .progress-handle-wrapper {
             position: absolute;
-            top: 0;
+            top: 50%;
             left: 0%;
-            height: 100%;
+            transform: translateY(-50%);
+            height: 14px;
             width: 0;
             pointer-events: none;
+            z-index: 10;
         }
 
         .progress-handle {
@@ -471,16 +511,16 @@
         <div class="header-actions">
             <button class="theme-btn" onclick="toggleThemePanel()" title="主题颜色">🎨</button>
             <button class="close-btn" onclick="closeMusicBox()" title="关闭">✕</button>
-        </div>
-    </div>
-    <div class="theme-panel" id="themePanel">
-        <div class="theme-options">
-            <div class="theme-option active" data-theme="purple" onclick="setMusicTheme('purple')" style="background: linear-gradient(135deg, #D4C4E8 0%, #C4B0E0 100%);"></div>
-            <div class="theme-option" data-theme="blue" onclick="setMusicTheme('blue')" style="background: linear-gradient(135deg, #A8D8EA 0%, #7EB5D6 100%);"></div>
-            <div class="theme-option" data-theme="green" onclick="setMusicTheme('green')" style="background: linear-gradient(135deg, #B8E0D2 0%, #95D1BE 100%);"></div>
-            <div class="theme-option" data-theme="pink" onclick="setMusicTheme('pink')" style="background: linear-gradient(135deg, #F8C8DC 0%, #F0A0C0 100%);"></div>
-            <div class="theme-option" data-theme="orange" onclick="setMusicTheme('orange')" style="background: linear-gradient(135deg, #FFE5B4 0%, #FFD180 100%);"></div>
-            <div class="theme-option" data-theme="gray" onclick="setMusicTheme('gray')" style="background: linear-gradient(135deg, #D5D5D5 0%, #B0B0B0 100%);"></div>
+            <div class="theme-panel" id="themePanel">
+                <div class="theme-options">
+                    <div class="theme-option active" data-theme="purple" onclick="setMusicTheme('purple')" style="background: linear-gradient(135deg, #D4C4E8 0%, #C4B0E0 100%);"></div>
+                    <div class="theme-option" data-theme="blue" onclick="setMusicTheme('blue')" style="background: linear-gradient(135deg, #A8D8EA 0%, #7EB5D6 100%);"></div>
+                    <div class="theme-option" data-theme="green" onclick="setMusicTheme('green')" style="background: linear-gradient(135deg, #B8E0D2 0%, #95D1BE 100%);"></div>
+                    <div class="theme-option" data-theme="pink" onclick="setMusicTheme('pink')" style="background: linear-gradient(135deg, #F8C8DC 0%, #F0A0C0 100%);"></div>
+                    <div class="theme-option" data-theme="orange" onclick="setMusicTheme('orange')" style="background: linear-gradient(135deg, #FFE5B4 0%, #FFD180 100%);"></div>
+                    <div class="theme-option" data-theme="gray" onclick="setMusicTheme('gray')" style="background: linear-gradient(135deg, #D5D5D5 0%, #B0B0B0 100%);"></div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="music-box-body">
@@ -515,9 +555,9 @@
                 <div class="progress-bar" id="progressBar">
                     <div class="progress-track">
                         <div class="progress-fill" id="progressFill"></div>
-                        <div class="progress-handle-wrapper" id="progressHandleWrapper">
-                            <div class="progress-handle" id="progressHandle"></div>
-                        </div>
+                    </div>
+                    <div class="progress-handle-wrapper" id="progressHandleWrapper">
+                        <div class="progress-handle" id="progressHandle"></div>
                     </div>
                 </div>
                 <span class="time total-time" id="totalTime">0:00</span>
@@ -974,7 +1014,6 @@
 
     function handleDragEnd(e) {
         if (!isDraggingProgress) return;
-        isDraggingProgress = false;
         document.getElementById('progressBar').classList.remove('dragging');
 
         // 松手后才真正跳转到目标位置
@@ -983,7 +1022,23 @@
         }
 
         if (wasPlayingBeforeDrag) {
-            play();
+            // 先播放，等音频seek完成后再解除拖拽状态
+            audioPlayer.play().then(() => {
+                playerState.isPlaying = true;
+                updatePlayButton();
+                // 延迟解除拖拽状态，确保音频已经seek完成，timeupdate事件不会覆盖UI
+                setTimeout(() => {
+                    isDraggingProgress = false;
+                }, 200);
+            }).catch(e => {
+                console.log('播放失败:', e);
+                isDraggingProgress = false;
+            });
+        } else {
+            // 延迟解除拖拽状态，确保音频seek完成
+            setTimeout(() => {
+                isDraggingProgress = false;
+            }, 200);
         }
     }
 
@@ -1062,7 +1117,28 @@
     };
 
     function toggleThemePanel() {
-        document.getElementById('themePanel').classList.toggle('active');
+        const panel = document.getElementById('themePanel');
+        const isOpening = !panel.classList.contains('active');
+        
+        panel.classList.toggle('active');
+        
+        // 如果面板打开，添加点击外部关闭的事件监听
+        if (isOpening) {
+            setTimeout(() => {
+                document.addEventListener('click', closeThemePanelOnClickOutside);
+            }, 0);
+        }
+    }
+    
+    function closeThemePanelOnClickOutside(e) {
+        const panel = document.getElementById('themePanel');
+        const themeBtn = document.querySelector('.theme-btn');
+        
+        // 如果点击的不是面板内部也不是主题按钮，则关闭面板
+        if (!panel.contains(e.target) && !themeBtn.contains(e.target)) {
+            panel.classList.remove('active');
+            document.removeEventListener('click', closeThemePanelOnClickOutside);
+        }
     }
 
     function setMusicTheme(themeName) {
