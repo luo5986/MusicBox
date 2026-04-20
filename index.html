@@ -1030,7 +1030,11 @@
 
         // 松手后才真正跳转到目标位置
         if (playerState.duration > 0) {
-            audioPlayer.currentTime = (dragTargetPercent / 100) * playerState.duration;
+            const targetTime = (dragTargetPercent / 100) * playerState.duration;
+            audioPlayer.currentTime = targetTime;
+            // 立即更新UI到目标位置，避免timeupdate事件用旧值覆盖
+            updateProgressUI(dragTargetPercent);
+            document.getElementById('currentTime').textContent = formatTime(targetTime);
         }
 
         if (wasPlayingBeforeDrag) {
@@ -1038,19 +1042,19 @@
             audioPlayer.play().then(() => {
                 playerState.isPlaying = true;
                 updatePlayButton();
-                // 延迟解除拖拽状态，确保音频已经seek完成，timeupdate事件不会覆盖UI
-                setTimeout(() => {
+                // 使用requestAnimationFrame确保在下一帧才解除拖拽状态
+                requestAnimationFrame(() => {
                     isDraggingProgress = false;
-                }, 200);
+                });
             }).catch(e => {
                 console.log('播放失败:', e);
                 isDraggingProgress = false;
             });
         } else {
-            // 延迟解除拖拽状态，确保音频seek完成
-            setTimeout(() => {
+            // 使用requestAnimationFrame确保在下一帧才解除拖拽状态
+            requestAnimationFrame(() => {
                 isDraggingProgress = false;
-            }, 200);
+            });
         }
     }
 
