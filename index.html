@@ -604,19 +604,19 @@
 <script>
     const allSongs = {
         default: [
-            { name: '曾轶可-私奔.mp3', title: '私奔 - 曾轶可' },
-            { name: '魏玉慧-相思遥.mp3', title: '相思遥 - 魏玉慧' },
-            { name: '夏日入侵企画-第一万零一次告白.mp3', title: '第一万零一次 - 夏日入侵企画' },
-            { name: '张与桐（阿细）-还好有你.mp3', title: '还好有你 - 张与桐' },
+            { name: '卫兰-街灯晚餐.mp3', title: '街灯晚餐 - 卫兰' },
             { name: 'Vaniah维-探窗+街头戏腔版.mp3', title: '探窗 - Vaniah维' },
-            { name: 'MC张天赋+姚焯菲-谁能避开恋爱这事情.mp3', title: '谁能避开恋爱这事情' },
-            { name: 'MC张天赋-隔墙有耳.mp3', title: '隔墙有耳 - MC张天赋' },
+            { name: 'Gareth.T-用背脊唱情歌.mp3', title: '用背脊唱情歌 - Gareth.T' },
+            { name: '魏玉慧-相思遥.mp3', title: '相思遥 - 魏玉慧' },
             { name: '吴雨霏-座右铭.mp3', title: '座右铭 - 吴雨霏' },
             { name: '吴雨霏-我本人.mp3', title: '我本人 - 吴雨霏' },
             { name: '吴雨霏-明知做戏-《手放开》粤语版.mp3', title: '明知做戏 - 吴雨霏' },
             { name: '陈奕迅-K歌之王.mp3', title: 'K歌之王 - 陈奕迅' },
-            { name: 'Gareth.T-用背脊唱情歌.mp3', title: '用背脊唱情歌 - Gareth.T' },
-            { name: '卫兰-街灯晚餐.mp3', title: '街灯晚餐 - 卫兰' }
+            { name: '张与桐（阿细）-还好有你.mp3', title: '还好有你 - 张与桐' },
+            { name: 'MC张天赋+姚焯菲-谁能避开恋爱这事情.mp3', title: '谁能避开恋爱这事情' },
+            { name: 'MC张天赋-隔墙有耳.mp3', title: '隔墙有耳 - MC张天赋' },
+            { name: '曾轶可-私奔.mp3', title: '私奔 - 曾轶可' },
+            { name: '夏日入侵企画-第一万零一次告白.mp3', title: '第一万零一次 - 夏日入侵企画' }
         ],
         pure: [
             { name: '至尊马甲-前前前世+绝美钢琴抒情柔版.mp3', title: '前前前世 - 至尊马甲' },
@@ -681,6 +681,9 @@
         duration: 0
     };
 
+    // 当前显示的歌单（与播放的歌单分开，切换tab不改变播放）
+    let displayPlaylist = 'default';
+
     const playModes = {
         list: { icon: '🔁', text: '列表循环' },
         random: { icon: '🔀', text: '随机播放' },
@@ -691,14 +694,22 @@
 
     function initMusic() {
         const savedState = localStorage.getItem('music_player_state');
-        if (savedState) {
+        const hasSavedState = savedState && JSON.parse(savedState).currentPlaylist;
+
+        if (hasSavedState) {
+            // 有缓存：恢复之前的播放状态
             const saved = JSON.parse(savedState);
-            playerState.currentPlaylist = saved.currentPlaylist || 'default';
+            playerState.currentPlaylist = saved.currentPlaylist;
             playerState.currentSongIndex = saved.currentSongIndex || 0;
             playerState.playMode = saved.playMode || 'list';
             playerState.volume = saved.volume || 1;
             playerState.isMuted = saved.isMuted || false;
             playerState.currentTime = saved.currentTime || 0;
+        } else {
+            // 无缓存：默认播放默认歌单第一首
+            playerState.currentPlaylist = 'default';
+            playerState.currentSongIndex = 0;
+            playerState.currentTime = 0;
         }
 
         audioPlayer.volume = playerState.isMuted ? 0 : playerState.volume;
@@ -715,7 +726,6 @@
         // 初始化进度条拖拽事件（支持鼠标和触摸）
         initProgressBarEvents();
 
-        updatePlaylistTabsUI();
         audioPlayer.addEventListener('loadedmetadata', () => {
             playerState.duration = audioPlayer.duration;
             document.getElementById('totalTime').textContent = formatTime(playerState.duration);
@@ -726,6 +736,9 @@
         setInterval(savePlayerState, 1000);
 
         updatePlayModeDisplay();
+        // 初始化显示的歌单为当前播放的歌单
+        displayPlaylist = playerState.currentPlaylist;
+        updatePlaylistTabsUI();
         renderSongList();
         loadMusicTheme();
 
@@ -880,14 +893,14 @@
     function updatePlaylistTabsUI() {
         document.querySelectorAll('.playlist-tab').forEach(tab => {
             tab.classList.remove('active');
-            if (tab.dataset.playlist === playerState.currentPlaylist) {
+            if (tab.dataset.playlist === displayPlaylist) {
                 tab.classList.add('active');
             }
         });
     }
 
     function switchPlaylist(playlistKey) {
-        if (playerState.currentPlaylist === playlistKey) return;
+        if (displayPlaylist === playlistKey) return;
 
         document.querySelectorAll('.playlist-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -896,28 +909,27 @@
             }
         });
 
-        playerState.currentPlaylist = playlistKey;
-        playerState.currentSongIndex = 0;
+        displayPlaylist = playlistKey;
         renderSongList();
     }
 
     function renderSongList() {
-        const songs = getPlaylistSongs(playerState.currentPlaylist);
-        const playlist = playlists[playerState.currentPlaylist];
+        const songs = getPlaylistSongs(displayPlaylist);
+        const playlist = playlists[displayPlaylist];
         const songListEl = document.getElementById('songList');
         const customSongs = getCustomPlaylist();
 
-        const isCustom = playerState.currentPlaylist === 'custom';
+        const isCustom = displayPlaylist === 'custom';
 
         songListEl.innerHTML = songs.map((song, index) => {
             const isInCustom = customSongs.some(s => s.name === song.name);
             const showAddBtn = !isCustom && !isInCustom;
             return `
-            <div class="song-item ${index === playerState.currentSongIndex ? 'active' : ''}"
+            <div class="song-item ${index === playerState.currentSongIndex && displayPlaylist === playerState.currentPlaylist ? 'active' : ''}"
                  onclick="playSongAtIndex(${index})" data-index="${index}">
                 <span class="song-number">${index + 1}</span>
                 <span class="song-title">${song.title}</span>
-                ${isCustom ? `<span class="song-delete" onclick="event.stopPropagation(); removeFromCustom(${index})">★</span>` : (showAddBtn ? `<span class="song-add" onclick="event.stopPropagation(); addToCustom('${song.name}', '${song.title}', '${playerState.currentPlaylist}')">☆</span>` : '')}
+                ${isCustom ? `<span class="song-delete" onclick="event.stopPropagation(); removeFromCustom(${index})">★</span>` : (showAddBtn ? `<span class="song-add" onclick="event.stopPropagation(); addToCustom('${song.name}', '${song.title}', '${displayPlaylist}')">☆</span>` : '')}
                 <span class="playing-indicator">🎵</span>
             </div>
         `}).join('');
@@ -936,7 +948,7 @@
     }
 
     function playSongAtIndex(index) {
-        loadSong(playerState.currentPlaylist, index);
+        loadSong(displayPlaylist, index);
     }
 
     function updateProgress() {
