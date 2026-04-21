@@ -22,6 +22,7 @@
             background: linear-gradient(135deg, #F8F6FA 0%, #E8E0EC 100%);
             min-height: 100vh;
             color: #4A4A4A;
+            overscroll-behavior: contain;
         }
 
         .music-box {
@@ -102,7 +103,7 @@
         .theme-popover::before {
             content: '';
             position: absolute;
-            top: -8px;
+            top: -6px;
             right: 45px;
             width: 0;
             height: 0;
@@ -113,8 +114,9 @@
 
         .theme-options {
             display: flex;
-            gap: 12px;
+            gap: 16px;
             justify-content: center;
+            padding: 4px;
         }
 
         .theme-option {
@@ -122,8 +124,9 @@
             height: 36px;
             border-radius: 50%;
             cursor: pointer;
-            border: 3px solid transparent;
             transition: all 0.2s;
+            box-sizing: border-box;
+            position: relative;
         }
 
         .theme-option:hover {
@@ -131,8 +134,7 @@
         }
 
         .theme-option.active {
-            border-color: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 0 0 4px white, 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .music-box-body {
@@ -159,6 +161,8 @@
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 2px 8px rgba(155, 138, 166, 0.1);
+            white-space: nowrap;
+            min-width: 0;
         }
 
         .playlist-tab:hover {
@@ -204,6 +208,7 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 12px rgba(155, 138, 166, 0.3);
+            flex-shrink: 0;
         }
 
         .album-art-placeholder {
@@ -212,6 +217,8 @@
 
         .track-info {
             flex: 1;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .track-name {
@@ -222,6 +229,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .playlist-name {
@@ -706,9 +714,9 @@
             playerState.isMuted = saved.isMuted || false;
             playerState.currentTime = saved.currentTime || 0;
         } else {
-            // 无缓存：默认播放默认歌单第一首
-            playerState.currentPlaylist = 'default';
-            playerState.currentSongIndex = 0;
+            // 无缓存：默认播放纯音乐第二首
+            playerState.currentPlaylist = 'pure';
+            playerState.currentSongIndex = 1;
             playerState.currentTime = 0;
         }
 
